@@ -3,15 +3,17 @@ use std::collections::HashMap;
 use compiler_11::{
     lexer::token::TokenType,
     parser::Parser,
-    ast::{FunctionDef, Variable},
+    ast::{FunctionDef, Variable, Expression, get_type},
+    data_type::DataType,
 };
 
 pub struct File<'a> {
-    name: String,
+    pub name: String,
     source: &'a str,
-    functions: HashMap<String, FunctionDef<'a>>,
-    variables: HashMap<String, Variable<'a>>,
+    pub functions: HashMap<String, FunctionDef<'a>>,
+    pub variables: HashMap<String, Variable<'a>>,
 }
+
 
 impl<'a> File<'a> {
     pub fn parse(source: &'a str) -> File<'a> {
@@ -44,6 +46,17 @@ impl<'a> File<'a> {
             source,
             functions,
             variables,
+        }   
+    }
+
+
+
+    pub fn type_inference(&self) {
+        for variable in self.variables.values() {
+            match &variable.value {
+                Some(value) => assert_eq!(variable.type_, value.get_type(), "Variable {} has type {} but value {}", variable.name, variable.type_, value.get_type()),
+                None => {assert_ne!(variable.type_, DataType::None, "Variable {} has no type or default value to infer type", variable.name)}
+            }
         }   
     }
 }

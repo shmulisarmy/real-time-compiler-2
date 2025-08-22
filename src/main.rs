@@ -26,29 +26,29 @@ fn main() {
     init_colors();
     // Example 1: Variable declaration
     let code = r#"
-        var num int = b * 9 + a(a, 3*0,)
+        var num string = "world" + "hello"
         
         func add(a int, b int,): int {
-            var result int = a + b * 7 + "hello"
+            var result int = 7 + "hello"
             return result
         }
     "#;
 
-    let mut p = Parser::new(code);
 
-    p.tokenizer.eat_lines();
+    let file = File::parse(code);   
     // Parse and print the variable declaration
-    p.tokenizer.expect(TokenType::Keyword);
-    let var = p.parse_var();
-    println!("Variable declaration:");
-    println!("  {}", var);
-    println!();
-
-    p.tokenizer.eat_lines();
+    file.variables.values().for_each(|var| {
+        println!("Variable declaration:");
+        println!("  {}", var);
+        println!();
+    });
 
     // Parse and print the function definition
-    p.tokenizer.expect(TokenType::Keyword);
-    let func = p.parse_function();
-    println!("Function definition:");
-    println!("{}", func);
+    file.functions.values().for_each(|func| {
+        println!("Function definition:");
+        println!("  {}", func);
+        println!();
+    });
+
+    file.type_inference();
 }

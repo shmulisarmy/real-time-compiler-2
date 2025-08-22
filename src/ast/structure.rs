@@ -1,6 +1,6 @@
 use crate::{
     data_type::DataType,
-    lexer::token::Token,
+    lexer::token::{Token, TokenType},
 };
 
 // ---- AST node types ----
@@ -26,6 +26,8 @@ pub struct OperatorUse<'a> {
 
 
 
+
+
 #[derive(Debug)]
 pub struct VarReference<'a> {
     pub name: String,
@@ -39,6 +41,9 @@ pub enum Expression<'a> {
     FunctionCall(FunctionCall<'a>),
     VarReference(VarReference<'a>),
 }
+
+
+
 
 #[derive(Debug)]
 pub enum ValidInFunctionBody<'a> {
@@ -54,3 +59,7 @@ pub struct FunctionDef<'a> {
     pub return_type: DataType,
     pub body: Vec<ValidInFunctionBody<'a>>,
 }
+
+
+
+
