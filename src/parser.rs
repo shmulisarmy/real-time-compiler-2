@@ -32,18 +32,18 @@ static OPERATOR_PRECEDENCE: Lazy<HashMap<&'static str, u32>> = Lazy::new(|| {
     hm
 });
 
-pub struct Parser {
-    pub tokenizer: Tokenizer,
+pub struct Parser<'a> {
+    pub tokenizer: Tokenizer<'a>,
 }
 
-impl Parser {
-    pub fn new(source: String) -> Parser {
+impl<'a> Parser<'a> {
+    pub fn new(source: &'a str) -> Parser<'a> {
         Parser {
             tokenizer: Tokenizer::new(source),
         }
     }
 
-    pub fn parse_var(&mut self) -> Variable {
+    pub fn parse_var(&mut self) -> Variable<'a> {
         let name = self.tokenizer.expect(TokenType::Identifier);
         let type_ = self.parse_type();
         if self.tokenizer.optionally_expect_string("=") {
@@ -61,7 +61,7 @@ impl Parser {
         };
     }
 
-    fn parse_expression_piece(&mut self) -> Expression {
+    fn parse_expression_piece(&mut self) -> Expression<'a> {
         println!(
             "[parse_expression_piece] Starting at position: {}",
             self.tokenizer.index
@@ -130,7 +130,7 @@ impl Parser {
         &mut self,
         start_punctuation: char,
         end_punctuation: char,
-    ) -> Vec<Expression> {
+    ) -> Vec<Expression<'a>> {
         let mut expression_list = Vec::new();
         self.tokenizer.expect_punctuation(start_punctuation);
         while !self
@@ -144,9 +144,9 @@ impl Parser {
         expression_list
     }
 
-    fn collect_custom_list<T>(
+    fn collect_custom_list<T, F: Fn(&mut Parser<'a>) -> T>(
         &mut self,
-        parser_method: fn(&mut Parser) -> T,
+        parser_method: F,
         start_punctuation: char,
         end_punctuation: char,
     ) -> Vec<T> {
@@ -163,9 +163,9 @@ impl Parser {
         expression_list
     }
 
-    fn collect_custom_list_without_comma<T>(
+    fn collect_custom_list_without_comma<T, F: Fn(&mut Parser<'a>) -> T>(
         &mut self,
-        parser_method: fn(&mut Parser) -> T,
+        parser_method: F,
         start_punctuation: char,
         end_punctuation: char,
     ) -> Vec<T> {
@@ -183,7 +183,7 @@ impl Parser {
         expression_list
     }
 
-    fn parse_function_call(&mut self) -> FunctionCall {
+    fn parse_function_call(&mut self) -> FunctionCall<'a> {
         let name = self.tokenizer.expect(TokenType::Identifier);
         let args = self.collect_expression_list('(', ')');
         return FunctionCall {
@@ -192,7 +192,7 @@ impl Parser {
         };
     }
 
-    pub fn parse_function_header(&mut self) -> (String, Vec<Variable>, DataType) {
+    pub fn parse_function_header(&mut self) -> (String, Vec<Variable<'a>>, DataType) {
         let name = self.tokenizer.expect(TokenType::Identifier);
         let args = self.collect_custom_list(|parser| parser.parse_var(), '(', ')');
         if self.tokenizer.optionally_expect_punctuation(':') {
@@ -203,7 +203,7 @@ impl Parser {
         return (name.value, args, return_type);
     }
 
-    fn parse_valid_in_function_body(&mut self) -> ValidInFunctionBody {
+    fn parse_valid_in_function_body(&mut self) -> ValidInFunctionBody<'a> {
         if self.tokenizer.optionally_expect_keyword_of("var") {
             return ValidInFunctionBody::Variable(self.parse_var());
         }
@@ -213,7 +213,7 @@ impl Parser {
         return ValidInFunctionBody::Expression(self.parse_expression(0));
     }
 
-    pub fn parse_function(&mut self) -> FunctionDef {
+    pub fn parse_function(&mut self) -> FunctionDef<'a> {
         let (name, args, return_type) = self.parse_function_header();
         let body = self.collect_custom_list_without_comma(
             |parser| parser.parse_valid_in_function_body(),
@@ -227,7 +227,7 @@ impl Parser {
             body,
         };
     }
-    pub fn parse_expression(&mut self, left_pull: u32) -> Expression {
+    pub fn parse_expression(&mut self, left_pull: u32) -> Expression<'a> {
         println!("[parse_expression] Starting with left_pull: {}", left_pull);
         let mut left: Expression = self.parse_expression_piece();
         println!("[parse_expression] Initial left: {:?}", left);

@@ -34,7 +34,7 @@ fn main() {
         }
     "#;
 
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
 
     p.tokenizer.eat_lines();
     // Parse and print the variable declaration

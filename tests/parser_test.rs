@@ -39,7 +39,7 @@ fn expr_token(ty: TokenType, value: &str) -> Expression {
 
 #[test]
 fn test_parse_variable_declaration() {
-    let mut p = Parser::new("var num int = 10".to_string());
+    let mut p = Parser::new("var num int = 10");
     p.tokenizer.expect(TokenType::Keyword);
     let var = p.parse_var();
     assert_ast_eq!(var.name, "num".to_string());
@@ -55,7 +55,7 @@ fn test_parse_variable_declaration() {
 #[test]
 fn test_parse_function() {
     let code = "my_func(a int, b int,): int { return a + b }";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     let function = p.parse_function();
 
     // Define the expected AST structure
@@ -118,7 +118,7 @@ fn test_parse_function() {
 #[test]
 fn test_parse_function_header() {
     let code = "my_func(a int, b int,): int";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     let (name, args, return_type) = p.parse_function_header();
 
     // Verify the parsed header
@@ -150,7 +150,7 @@ fn test_parse_function_header() {
 #[test]
 fn test_parse_complex_expression() {
     let code = "var result int = (a + b) * (c - d) / e";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     p.tokenizer.expect(TokenType::Keyword);
     let var = p.parse_var();
 
@@ -184,7 +184,7 @@ fn test_parse_complex_expression() {
 #[test]
 fn test_parse_var_with_value() {
     let code = "var result bool = a == b";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     p.tokenizer.expect(TokenType::Keyword);
     let var = p.parse_var();
 
@@ -201,7 +201,7 @@ fn test_parse_var_with_value() {
 #[test]
 fn test_parse_function_call_expression() {
     let code = "result = max(a + b, c * d,)";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     let parsed_expression = p.parse_expression(0);
 
     // Define the expected AST structure based on actual parser behavior
@@ -231,7 +231,7 @@ fn test_parse_function_call_expression() {
 #[test]
 fn test_parse_var() {
     let code = "var result int = a + b";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     p.tokenizer.expect(TokenType::Keyword);
     let parsed_var = p.parse_var();
 
@@ -252,7 +252,7 @@ fn test_parse_var() {
 #[test]
 fn test_parse_function2() {
     let code = "func main() { send_message() }";
-    let mut p = Parser::new(code.to_string());
+    let mut p = Parser::new(code);
     p.tokenizer.expect(TokenType::Keyword);
     let parsed_function = p.parse_function();
 

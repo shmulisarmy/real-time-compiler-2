@@ -5,43 +5,52 @@ use crate::{
 
 // ---- AST node types ----
 #[derive(Debug)]
-pub struct FunctionCall {
+pub struct FunctionCall<'a> {
     pub name: String,
-    pub args: Vec<Expression>,
+    pub args: Vec<Expression<'a>>,
 }
 
 #[derive(Debug)]
-pub struct Variable {
+pub struct Variable<'a> {
     pub name: String,
     pub type_: DataType,
-    pub value: Option<Expression>,
+    pub value: Option<Expression<'a>>,
 }
 
 #[derive(Debug)]
-pub struct OperatorUse {
-    pub left: Box<Expression>,
+pub struct OperatorUse<'a> {
+    pub left: Box<Expression<'a>>,
     pub operator: String,
-    pub right: Box<Expression>,
+    pub right: Box<Expression<'a>>,
 }
 
-#[derive(Debug)]
-pub enum Expression {
-    OperatorUse(OperatorUse),
-    Token(Token),
-    FunctionCall(FunctionCall),
-}
+
 
 #[derive(Debug)]
-pub enum ValidInFunctionBody {
-    Variable(Variable),
-    Expression(Expression),
-    Return(Expression),
-}
-
-#[derive(Debug)]
-pub struct FunctionDef {
+pub struct VarReference<'a> {
     pub name: String,
-    pub args: Vec<Variable>,
+    pub referring_to: &'a Variable<'a>,
+}
+
+#[derive(Debug)]
+pub enum Expression<'a> {
+    OperatorUse(OperatorUse<'a>),
+    Token(Token),
+    FunctionCall(FunctionCall<'a>),
+    VarReference(VarReference<'a>),
+}
+
+#[derive(Debug)]
+pub enum ValidInFunctionBody<'a> {
+    Variable(Variable<'a>),
+    Expression(Expression<'a>),
+    Return(Expression<'a>),
+}
+
+#[derive(Debug)]
+pub struct FunctionDef<'a> {
+    pub name: String,
+    pub args: Vec<Variable<'a>>,
     pub return_type: DataType,
-    pub body: Vec<ValidInFunctionBody>,
+    pub body: Vec<ValidInFunctionBody<'a>>,
 }

@@ -107,7 +107,7 @@ impl AstComparable for DataType {
 }
 
 // ---- AST node comparison impls ----
-impl AstComparable for FunctionCall {
+impl<'a> AstComparable for FunctionCall<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         let mut errors = Vec::new();
         if self.name != other.name {
@@ -123,9 +123,9 @@ impl AstComparable for FunctionCall {
     }
 }
 
-impl PartialEq for FunctionCall { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for FunctionCall<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
 
-impl AstComparable for Variable {
+impl<'a> AstComparable for Variable<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         let mut errors = Vec::new();
         if self.name != other.name {
@@ -147,9 +147,9 @@ impl AstComparable for Variable {
     }
 }
 
-impl PartialEq for Variable { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for Variable<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
 
-impl AstComparable for OperatorUse {
+impl<'a> AstComparable for OperatorUse<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         let mut errors = Vec::new();
         if self.operator != other.operator {
@@ -168,9 +168,9 @@ impl AstComparable for OperatorUse {
     }
 }
 
-impl PartialEq for OperatorUse { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for OperatorUse<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
 
-impl AstComparable for Expression {
+impl<'a> AstComparable for Expression<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         match (self, other) {
             (Expression::OperatorUse(a), Expression::OperatorUse(b)) => a.compare(b),
@@ -182,14 +182,17 @@ impl AstComparable for Expression {
                 } else { Ok(()) }
             }
             (Expression::FunctionCall(a), Expression::FunctionCall(b)) => a.compare(b),
+            (Expression::VarReference(a), Expression::VarReference(b)) => {
+                if a.name == b.name { Ok(()) } else { Err(vec![ComparisonError::MismatchedValues(format!("Var reference mismatch: '{}' != '{}'", a.name, b.name))]) }
+            }
             _ => Err(vec![ComparisonError::MismatchedVariant]),
         }
     }
 }
 
-impl PartialEq for Expression { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for Expression<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
 
-impl AstComparable for ValidInFunctionBody {
+impl<'a> AstComparable for ValidInFunctionBody<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         match (self, other) {
             (ValidInFunctionBody::Variable(a), ValidInFunctionBody::Variable(b)) => a.compare(b),
@@ -200,9 +203,9 @@ impl AstComparable for ValidInFunctionBody {
     }
 }
 
-impl PartialEq for ValidInFunctionBody { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for ValidInFunctionBody<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
 
-impl AstComparable for FunctionDef {
+impl<'a> AstComparable for FunctionDef<'a> {
     fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
         let mut errors = Vec::new();
         if self.name != other.name {
@@ -227,4 +230,4 @@ impl AstComparable for FunctionDef {
     }
 }
 
-impl PartialEq for FunctionDef { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+impl<'a> PartialEq for FunctionDef<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }

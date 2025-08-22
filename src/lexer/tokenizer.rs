@@ -20,13 +20,13 @@ static KEYWORDS: Lazy<HashMap<&'static str, TokenType>> = Lazy::new(|| {
     hm
 });
 
-pub struct Tokenizer {
-    pub source: String,
+pub struct Tokenizer<'a> {
+    pub source: &'a str,
     pub index: usize,
 }
 
-impl Tokenizer {
-    pub fn new(source: String) -> Tokenizer {
+impl<'a> Tokenizer<'a> {
+    pub fn new(source: &'a str) -> Tokenizer<'a> {
         Tokenizer { source, index: 0 }
     }
 

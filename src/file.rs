@@ -6,14 +6,15 @@ use compiler_11::{
     ast::{FunctionDef, Variable},
 };
 
-pub struct File {
+pub struct File<'a> {
     name: String,
-    functions: HashMap<String, FunctionDef>,
-    variables: HashMap<String, Variable>,
+    source: &'a str,
+    functions: HashMap<String, FunctionDef<'a>>,
+    variables: HashMap<String, Variable<'a>>,
 }
 
-impl File {
-    pub fn parse(source: String) -> File {
+impl<'a> File<'a> {
+    pub fn parse(source: &'a str) -> File<'a> {
         let mut parser = Parser::new(source);
         let mut functions = HashMap::new();
         let mut variables = HashMap::new();
@@ -40,6 +41,7 @@ impl File {
         }
         File {
             name: "main".to_string(),
+            source,
             functions,
             variables,
         }   
@@ -56,7 +58,7 @@ mod tests {
     #[test]
     fn test_parse_file() {
         let code = "func add(a int, b int,): int { return a + b } \n var result int = add(1, 2,)";
-        let file = File::parse(code.to_string());
+        let file = File::parse(code);
         let parsed_add_function = file.functions.get("add").unwrap();
 
         let expected_add_function = FunctionDef {

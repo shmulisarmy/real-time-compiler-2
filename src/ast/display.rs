@@ -15,7 +15,7 @@ fn indent(f: &mut std::fmt::Formatter, depth: usize) -> fmt::Result {
     write!(f, "{:indent$}", "", indent = depth * 2)
 }
 
-impl fmt::Display for FunctionCall {
+impl<'a> fmt::Display for FunctionCall<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}(", format_identifier(&self.name))?;
         for (i, arg) in self.args.iter().enumerate() {
@@ -26,7 +26,7 @@ impl fmt::Display for FunctionCall {
     }
 }
 
-impl fmt::Display for Variable {
+impl<'a> fmt::Display for Variable<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -39,13 +39,13 @@ impl fmt::Display for Variable {
     }
 }
 
-impl fmt::Display for OperatorUse {
+impl<'a> fmt::Display for OperatorUse<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({} {} {})", self.left, format_operator(&self.operator), self.right)
     }
 }
 
-impl fmt::Display for Expression {
+impl<'a> fmt::Display for Expression<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expression::OperatorUse(op) => write!(f, "{}", op),
@@ -56,11 +56,12 @@ impl fmt::Display for Expression {
                 _ => write!(f, "{}", format_identifier(&t.value)),
             },
             Expression::FunctionCall(func) => write!(f, "{}", func),
+            Expression::VarReference(var_ref) => write!(f, "{}", format_identifier(&var_ref.name)),
         }
     }
 }
 
-impl fmt::Display for ValidInFunctionBody {
+impl<'a> fmt::Display for ValidInFunctionBody<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ValidInFunctionBody::Variable(var) => write!(f, "{}", var),
@@ -70,7 +71,7 @@ impl fmt::Display for ValidInFunctionBody {
     }
 }
 
-impl fmt::Display for FunctionDef {
+impl<'a> fmt::Display for FunctionDef<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Function signature
         write!(
