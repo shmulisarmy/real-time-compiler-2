@@ -62,71 +62,34 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_piece(&mut self) -> Expression<'a> {
-        println!(
-            "[parse_expression_piece] Starting at position: {}",
-            self.tokenizer.index
-        );
         let position_at_start = self.tokenizer.index;
 
-        println!("[parse_expression_piece] Getting next token...");
         let next_token = self.tokenizer.next();
         if next_token.is_none() {
-            println!("[parse_expression_piece] Error: Unexpected end of file");
             panic!("Unexpected end of file");
         }
         let next_token = next_token.unwrap();
-        println!("[parse_expression_piece] Next token: {:?}", next_token);
 
-        // Handle parenthesized expressions
         if next_token.type_ == TokenType::Punctuation && next_token.value == "[" {
             self.tokenizer.index = position_at_start;
             return Expression::Array(self.parse_array());
         }
         if next_token.type_ == TokenType::Punctuation && next_token.value == "(" {
-            println!(
-                "[parse_expression_piece] Found opening parenthesis, parsing inner expression"
-            );
             let expr = self.parse_expression(0);
-            println!(
-                "[parse_expression_piece] Finished parsing inner expression: {:?}",
-                expr
-            );
-            println!("[parse_expression_piece] Expecting closing parenthesis...");
             self.tokenizer.expect_punctuation(')');
-            println!("[parse_expression_piece] Found closing parenthesis, returning expression");
             return expr;
         }
 
-        // Handle function calls
         if next_token.type_ == TokenType::Identifier {
-            println!(
-                "[parse_expression_piece] Found identifier: {}",
-                next_token.value
-            );
             if let Some(peek) = self.tokenizer.peek() {
-                println!("[parse_expression_piece] Peeked next token: {:?}", peek);
                 if peek.type_ == TokenType::Punctuation && peek.value == "(" {
-                    println!(
-                        "[parse_expression_piece] Found function call syntax, resetting to position {}",
-                        position_at_start
-                    );
                     self.tokenizer.index = position_at_start;
                     let func_call = self.parse_function_call();
-                    println!(
-                        "[parse_expression_piece] Parsed function call: {:?}",
-                        func_call
-                    );
                     return Expression::FunctionCall(func_call);
                 }
-            } else {
-                println!("[parse_expression_piece] No more tokens after identifier");
             }
         }
 
-        println!(
-            "[parse_expression_piece] Returning token as expression: {:?}",
-            next_token
-        );
         if next_token.type_ == TokenType::Identifier {
             return Expression::VarReference(crate::ast::structure::VarReference { name: next_token.value.clone(), referring_to: None });
         }
