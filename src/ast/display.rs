@@ -1,0 +1,100 @@
+use crate::lexer::token::TokenType;
+use colored::*;
+use std::fmt;
+
+use super::structure::{Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable};
+
+fn format_type(s: &str) -> String { s.blue().to_string() }
+fn format_keyword(s: &str) -> String { s.blue().bold().to_string() }
+fn format_identifier(s: &str) -> String { s.yellow().to_string() }
+fn format_number(s: &str) -> String { s.green().to_string() }
+fn format_operator(s: &str) -> String { s.cyan().to_string() }
+fn format_string(s: &str) -> String { s.red().to_string() }
+
+fn indent(f: &mut std::fmt::Formatter, depth: usize) -> fmt::Result {
+    write!(f, "{:indent$}", "", indent = depth * 2)
+}
+
+impl fmt::Display for FunctionCall {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}(", format_identifier(&self.name))?;
+        for (i, arg) in self.args.iter().enumerate() {
+            if i > 0 { write!(f, "{}", ", ".white())?; }
+            write!(f, "{}", arg)?;
+        }
+        write!(f, "{}", ")".white())
+    }
+}
+
+impl fmt::Display for Variable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}: {}",
+            format_identifier(&self.name),
+            format_type(&self.type_.to_string())
+        )?;
+        if let Some(expr) = &self.value { write!(f, " {} {}", "=".white(), expr)?; }
+        Ok(())
+    }
+}
+
+impl fmt::Display for OperatorUse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({} {} {})", self.left, format_operator(&self.operator), self.right)
+    }
+}
+
+impl fmt::Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expression::OperatorUse(op) => write!(f, "{}", op),
+            Expression::Token(t) => match t.type_ {
+                TokenType::Number => write!(f, "{}", format_number(&t.value)),
+                TokenType::String => write!(f, "\"{}\"", format_string(&t.value)),
+                TokenType::Keyword => write!(f, "{}", format_keyword(&t.value)),
+                _ => write!(f, "{}", format_identifier(&t.value)),
+            },
+            Expression::FunctionCall(func) => write!(f, "{}", func),
+        }
+    }
+}
+
+impl fmt::Display for ValidInFunctionBody {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ValidInFunctionBody::Variable(var) => write!(f, "{}", var),
+            ValidInFunctionBody::Expression(expr) => write!(f, "{}", expr),
+            ValidInFunctionBody::Return(expr) => write!(f, "{} {}", format_keyword("return"), expr),
+        }
+    }
+}
+
+impl fmt::Display for FunctionDef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Function signature
+        write!(
+            f,
+            "{} {} (",
+            format_keyword("fn"),
+            format_identifier(&self.name)
+        )?;
+
+        // Format arguments with proper coloring
+        for (i, arg) in self.args.iter().enumerate() {
+            if i > 0 { write!(f, "{}", ", ".white())?; }
+            write!(f, "{}: {}", format_identifier(&arg.name), format_type(&arg.type_.to_string()))?;
+        }
+
+        // Return type and opening brace
+        write!(f, ") {} {} {{\n", "->".white(), format_type(&self.return_type.to_string()))?;
+
+        // Function body with proper indentation
+        for stmt in &self.body {
+            write!(f, "    {}\n", stmt)?;
+        }
+
+        // Closing brace
+        write!(f, "}}")
+    }
+}

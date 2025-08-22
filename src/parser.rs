@@ -1,0 +1,286 @@
+use crate::{
+    ast::{Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
+    data_type::{type_from, DataType},
+    lexer::{
+        token::{self, TokenType},
+        tokenizer::Tokenizer,
+    },
+};
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
+
+static OPERATOR_PRECEDENCE: Lazy<HashMap<&'static str, u32>> = Lazy::new(|| {
+    let mut hm = HashMap::new();
+    hm.insert("=", 1);
+    hm.insert("+", 2);
+    hm.insert("-", 2);
+    hm.insert("*", 3);
+    hm.insert("/", 3);
+    hm.insert("+=", 2);
+    hm.insert("-=", 2);
+    hm.insert("*=", 3);
+    hm.insert("/=", 3);
+    hm.insert("|", 4);
+    hm.insert("==", 5);
+    hm.insert("!=", 5);
+    hm.insert(">=", 6);
+    hm.insert("<=", 6);
+    hm.insert(">", 6);
+    hm.insert("<", 6);
+    hm.insert("&&", 7);
+    hm.insert("||", 8);
+    hm
+});
+
+pub struct Parser {
+    pub tokenizer: Tokenizer,
+}
+
+impl Parser {
+    pub fn new(source: String) -> Parser {
+        Parser {
+            tokenizer: Tokenizer::new(source),
+        }
+    }
+
+    pub fn parse_var(&mut self) -> Variable {
+        let name = self.tokenizer.expect(TokenType::Identifier);
+        let type_ = self.parse_type();
+        if self.tokenizer.optionally_expect_string("=") {
+            let value = self.parse_expression(0);
+            return Variable {
+                name: name.value,
+                type_,
+                value: Some(value),
+            };
+        }
+        return Variable {
+            name: name.value,
+            type_,
+            value: None,
+        };
+    }
+
+    fn parse_expression_piece(&mut self) -> Expression {
+        println!(
+            "[parse_expression_piece] Starting at position: {}",
+            self.tokenizer.index
+        );
+        let position_at_start = self.tokenizer.index;
+
+        println!("[parse_expression_piece] Getting next token...");
+        let next_token = self.tokenizer.next();
+        if next_token.is_none() {
+            println!("[parse_expression_piece] Error: Unexpected end of file");
+            panic!("Unexpected end of file");
+        }
+        let next_token = next_token.unwrap();
+        println!("[parse_expression_piece] Next token: {:?}", next_token);
+
+        // Handle parenthesized expressions
+        if next_token.type_ == TokenType::Punctuation && next_token.value == "(" {
+            println!(
+                "[parse_expression_piece] Found opening parenthesis, parsing inner expression"
+            );
+            let expr = self.parse_expression(0);
+            println!(
+                "[parse_expression_piece] Finished parsing inner expression: {:?}",
+                expr
+            );
+            println!("[parse_expression_piece] Expecting closing parenthesis...");
+            self.tokenizer.expect_punctuation(')');
+            println!("[parse_expression_piece] Found closing parenthesis, returning expression");
+            return expr;
+        }
+
+        // Handle function calls
+        if next_token.type_ == TokenType::Identifier {
+            println!(
+                "[parse_expression_piece] Found identifier: {}",
+                next_token.value
+            );
+            if let Some(peek) = self.tokenizer.peek() {
+                println!("[parse_expression_piece] Peeked next token: {:?}", peek);
+                if peek.type_ == TokenType::Punctuation && peek.value == "(" {
+                    println!(
+                        "[parse_expression_piece] Found function call syntax, resetting to position {}",
+                        position_at_start
+                    );
+                    self.tokenizer.index = position_at_start;
+                    let func_call = self.parse_function_call();
+                    println!(
+                        "[parse_expression_piece] Parsed function call: {:?}",
+                        func_call
+                    );
+                    return Expression::FunctionCall(func_call);
+                }
+            } else {
+                println!("[parse_expression_piece] No more tokens after identifier");
+            }
+        }
+
+        println!(
+            "[parse_expression_piece] Returning token as expression: {:?}",
+            next_token
+        );
+        Expression::Token(next_token)
+    }
+
+    fn collect_expression_list(
+        &mut self,
+        start_punctuation: char,
+        end_punctuation: char,
+    ) -> Vec<Expression> {
+        let mut expression_list = Vec::new();
+        self.tokenizer.expect_punctuation(start_punctuation);
+        while !self
+            .tokenizer
+            .optionally_expect_punctuation(end_punctuation)
+        {
+            expression_list.push(self.parse_expression(0));
+            println!("self.tokenizer.index: {}", self.tokenizer.index);
+            self.tokenizer.expect_punctuation(',');
+        }
+        expression_list
+    }
+
+    fn collect_custom_list<T>(
+        &mut self,
+        parser_method: fn(&mut Parser) -> T,
+        start_punctuation: char,
+        end_punctuation: char,
+    ) -> Vec<T> {
+        let mut expression_list = Vec::new();
+        self.tokenizer.expect_punctuation(start_punctuation);
+        while !self
+            .tokenizer
+            .optionally_expect_punctuation(end_punctuation)
+        {
+            expression_list.push(parser_method(self));
+            println!("self.tokenizer.index: {}", self.tokenizer.index);
+            self.tokenizer.expect_punctuation(',');
+        }
+        expression_list
+    }
+
+    fn collect_custom_list_without_comma<T>(
+        &mut self,
+        parser_method: fn(&mut Parser) -> T,
+        start_punctuation: char,
+        end_punctuation: char,
+    ) -> Vec<T> {
+        let mut expression_list = Vec::new();
+        self.tokenizer.expect_punctuation(start_punctuation);
+        self.tokenizer.eat_lines();
+        while !self
+            .tokenizer
+            .optionally_expect_punctuation(end_punctuation)
+        {
+            expression_list.push(parser_method(self));
+            println!("self.tokenizer.index: {}", self.tokenizer.index);
+            self.tokenizer.eat_lines();
+        }
+        expression_list
+    }
+
+    fn parse_function_call(&mut self) -> FunctionCall {
+        let name = self.tokenizer.expect(TokenType::Identifier);
+        let args = self.collect_expression_list('(', ')');
+        return FunctionCall {
+            name: name.value,
+            args,
+        };
+    }
+
+    pub fn parse_function_header(&mut self) -> (String, Vec<Variable>, DataType) {
+        let name = self.tokenizer.expect(TokenType::Identifier);
+        let args = self.collect_custom_list(|parser| parser.parse_var(), '(', ')');
+        if self.tokenizer.optionally_expect_punctuation(':') {
+            let return_type = self.parse_type();
+            return (name.value, args, return_type);
+        }
+        let return_type = DataType::None;
+        return (name.value, args, return_type);
+    }
+
+    fn parse_valid_in_function_body(&mut self) -> ValidInFunctionBody {
+        if self.tokenizer.optionally_expect_keyword_of("var") {
+            return ValidInFunctionBody::Variable(self.parse_var());
+        }
+        if self.tokenizer.optionally_expect_keyword_of("return") {
+            return ValidInFunctionBody::Return(self.parse_expression(0));
+        }
+        return ValidInFunctionBody::Expression(self.parse_expression(0));
+    }
+
+    pub fn parse_function(&mut self) -> FunctionDef {
+        let (name, args, return_type) = self.parse_function_header();
+        let body = self.collect_custom_list_without_comma(
+            |parser| parser.parse_valid_in_function_body(),
+            '{',
+            '}',
+        );
+        return FunctionDef {
+            name,
+            args,
+            return_type,
+            body,
+        };
+    }
+    pub fn parse_expression(&mut self, left_pull: u32) -> Expression {
+        println!("[parse_expression] Starting with left_pull: {}", left_pull);
+        let mut left: Expression = self.parse_expression_piece();
+        println!("[parse_expression] Initial left: {:?}", left);
+
+        while self.tokenizer.in_range() {
+            let possibly_greater_precedence_operand = self.tokenizer.peek();
+            if possibly_greater_precedence_operand.is_none() {
+                break;
+            }
+            let possibly_greater_precedence_operand = possibly_greater_precedence_operand.unwrap();
+            if possibly_greater_precedence_operand.type_ != TokenType::Operator {
+                break;
+            }
+            if let Some(&precedence) =
+                OPERATOR_PRECEDENCE.get(possibly_greater_precedence_operand.value.as_str())
+            {
+                if precedence > left_pull {
+                    println!(
+                        "[parse_expression] Found operator '{}' with precedence {} (needs > {})",
+                        possibly_greater_precedence_operand.value, precedence, left_pull
+                    );
+                    self.tokenizer.next(); // Consume the operator
+
+                    println!(
+                        "[parse_expression] Parsing right hand side with precedence {}",
+                        precedence
+                    );
+                    let right = self.parse_expression(precedence);
+
+                    println!(
+                        "[parse_expression] Creating OperatorUse: {} between {:?} and {:?}",
+                        possibly_greater_precedence_operand.value, left, right
+                    );
+                    left = Expression::OperatorUse(OperatorUse {
+                        operator: possibly_greater_precedence_operand.value.clone(),
+                        left: Box::new(left),
+                        right: Box::new(right),
+                    });
+                    println!("[parse_expression] New left: {:?}", left);
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        println!("[parse_expression] Final expression: {:?}", left);
+        return left;
+    }
+    fn parse_type(&mut self) -> DataType {
+        let token = self.tokenizer.expect(TokenType::Identifier);
+        type_from(token.value)
+    }
+}
+
+
