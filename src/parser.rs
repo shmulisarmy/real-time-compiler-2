@@ -1,5 +1,5 @@
 use crate::{
-    ast::{structure::{Array, Object, StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
+    ast::{structure::{Array, Object, StructDef, StructScopeItem, Subscript}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
     data_type::{type_from, DataType},
     lexer::{
         token::{self, TokenType},
@@ -118,6 +118,11 @@ impl<'a> Parser<'a> {
                             let struct_call = self.parse_object();
                             return Expression::Object(struct_call);
                         }
+                        "[" => {
+                            self.tokenizer.index = position_at_start;
+                            let subscript = self.parse_subscript();
+                            return Expression::Subscript(subscript);
+                        }
                         _ => {}
                     }
             }
@@ -125,6 +130,18 @@ impl<'a> Parser<'a> {
         }
 
         Expression::Token(next_token)
+    }
+
+
+    fn parse_subscript(&mut self) -> Subscript<'a> {
+        let name = self.tokenizer.expect(TokenType::Identifier);
+        self.tokenizer.expect_punctuation('[');
+        let arg = self.parse_expression(0);
+        self.tokenizer.expect_punctuation(']');
+        return Subscript {
+            name: name.value,
+            arg: Box::new(arg),
+        };
     }
 
     fn collect_expression_list(

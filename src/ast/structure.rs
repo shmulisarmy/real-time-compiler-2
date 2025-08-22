@@ -51,8 +51,16 @@ pub enum Expression<'a> {
     VarReference(VarReference<'a>),
     Array(Array<'a>),
     Object(Object<'a>),
+    Subscript(Subscript<'a>),
 }
 
+
+
+#[derive(Debug)]
+pub struct Subscript<'a> {
+    pub name: String,
+    pub arg: Box<Expression<'a>>,
+}
 
 
 

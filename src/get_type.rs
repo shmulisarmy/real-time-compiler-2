@@ -68,6 +68,11 @@ impl<'compilation_unit> HasType<'compilation_unit> for Expression<'compilation_u
             },
             Expression::Array(array) => DataType::Array,
             Expression::Object(object) => DataType::Object,
+            Expression::Subscript(subscript) => {
+                let variable = file.variables.get(&subscript.name)
+                    .unwrap_or_else(|| panic!("Variable {} not found", subscript.name));
+                variable.type_.clone()
+            },
             // _ => panic!("Unknown expression type: {}", self),
         }
     }

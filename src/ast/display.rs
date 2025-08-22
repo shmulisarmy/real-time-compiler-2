@@ -59,6 +59,7 @@ impl<'a> fmt::Display for Expression<'a> {
             Expression::VarReference(var_ref) => write!(f, "{}", format_identifier(&var_ref.name)),
             Expression::Array(_) => write!(f, "{}", "array"),
             Expression::Object(_) => write!(f, "{}", "object"),
+            Expression::Subscript(_) => write!(f, "{}", "subscript"),
         }
     }
 }
