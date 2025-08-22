@@ -31,9 +31,9 @@ fn main() {
     let code = r#"
         var n int = 1
         var num int = 3 - n
-        var res int = add(1, n,)
+        var res int = add(1, n)
         
-        func add(a int, b int,): int {
+        func add(a int, b int): int {
             var result int = 7 + 5
             var z string
             var d int = a + b

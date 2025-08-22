@@ -142,7 +142,10 @@ impl<'a> Parser<'a> {
         {
             expression_list.push(self.parse_expression(0));
             println!("self.tokenizer.index: {}", self.tokenizer.index);
-            self.tokenizer.expect_punctuation(',');
+            if !self.tokenizer.optionally_expect_punctuation(',') {
+                self.tokenizer.expect_punctuation(end_punctuation);
+                break;
+            }
         }
         expression_list
     }
@@ -161,7 +164,10 @@ impl<'a> Parser<'a> {
         {
             expression_list.push(parser_method(self));
             println!("self.tokenizer.index: {}", self.tokenizer.index);
-            self.tokenizer.expect_punctuation(',');
+            if !self.tokenizer.optionally_expect_punctuation(',') {
+                self.tokenizer.expect_punctuation(end_punctuation);
+                break;
+            }
         }
         expression_list
     }
