@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
+    ast::{structure::{StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
     data_type::{type_from, DataType},
     lexer::{
         token::{self, TokenType},
@@ -228,6 +228,38 @@ impl<'a> Parser<'a> {
             args,
             return_type,
             body,
+        };
+    }
+
+
+    fn parse_field_or_method(&mut self) -> StructScopeItem<'a> {
+        let start_pos = self.tokenizer.index;
+        if self.tokenizer.optionally_expect_keyword_of("func") {
+            return StructScopeItem::Method(self.parse_function());
+        }
+        if self.tokenizer.optionally_expect_type(TokenType::Identifier) && self.tokenizer.optionally_expect_punctuation('(') {
+            self.tokenizer.index = start_pos;
+            return StructScopeItem::Method(self.parse_function());
+        }
+        self.tokenizer.index = start_pos;
+        return StructScopeItem::Field(self.parse_var());
+    }
+
+    pub fn parse_struct(&mut self) -> StructDef<'a> {
+        let name_token = self.tokenizer.expect(TokenType::Identifier);
+        let scope_items = self.collect_custom_list_without_comma(|parser| parser.parse_field_or_method(), '{', '}');
+        let mut fields = vec![];
+        let mut methods = vec![];
+        for item in scope_items {
+            match item {
+                StructScopeItem::Field(field) => fields.push(field),
+                StructScopeItem::Method(method) => methods.push(method),
+            }
+        }
+        return StructDef {
+            name: name_token.value,
+            fields,
+            methods,
         };
     }
     pub fn parse_expression(&mut self, left_pull: u32) -> Expression<'a> {

@@ -63,5 +63,19 @@ pub struct FunctionDef<'a> {
 }
 
 
+#[derive(Debug)]
+pub struct StructDef<'a> {
+    pub name: String,
+    pub fields: Vec<Variable<'a>>,
+    pub methods: Vec<FunctionDef<'a>>,
+}
+
+
+
+#[derive(Debug)]
+pub enum StructScopeItem<'a> {
+    Field(Variable<'a>),
+    Method(FunctionDef<'a>),
+}
 
 

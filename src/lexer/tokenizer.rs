@@ -215,6 +215,19 @@ impl<'a> Tokenizer<'a> {
             self.get_line_and_col_from_pos(start_pos).1
         );
     }
+
+    pub fn optionally_expect_type(&mut self, type_: TokenType) -> bool {
+        let peeked_token = self.peek();
+        if peeked_token.is_none() {
+            return false;
+        }
+        let token = peeked_token.unwrap();
+        if token.type_ != type_ {
+            return false;
+        }
+        self.next();
+        true
+    }
     pub fn expect(&mut self, type_: TokenType) -> Token {
         let start_pos = self.index;
         let token = self.next().unwrap();

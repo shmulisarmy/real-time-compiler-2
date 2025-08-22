@@ -1,6 +1,5 @@
 use crate::{
-    data_type::DataType,
-    lexer::token::Token,
+    ast::structure::StructDef, data_type::DataType, lexer::token::Token
 };
 
 use super::structure::{
@@ -231,3 +230,23 @@ impl<'a> AstComparable for FunctionDef<'a> {
 }
 
 impl<'a> PartialEq for FunctionDef<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
+
+
+
+impl<'a> AstComparable for StructDef<'a> {
+    fn compare(&self, other: &Self) -> Result<(), Vec<ComparisonError>> {
+        let mut errors = Vec::new();
+        if self.name != other.name {
+            errors.push(ComparisonError::MismatchedValues(format!(
+                "Struct name mismatch: '{}' != '{}'",
+                self.name, other.name
+            )));
+        }
+        if let Err(errs) = compare_vec(&self.fields, &other.fields, "struct fields") {
+            errors.extend(errs);
+        }
+        if errors.is_empty() { Ok(()) } else { Err(errors) }
+    }
+}
+
+impl<'a> PartialEq for StructDef<'a> { fn eq(&self, other: &Self) -> bool { self.compare(other).is_ok() } }
