@@ -1,5 +1,5 @@
 use crate::{
-    ast::{structure::{StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
+    ast::{structure::{Array, StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
     data_type::{type_from, DataType},
     lexer::{
         token::{self, TokenType},
@@ -78,6 +78,10 @@ impl<'a> Parser<'a> {
         println!("[parse_expression_piece] Next token: {:?}", next_token);
 
         // Handle parenthesized expressions
+        if next_token.type_ == TokenType::Punctuation && next_token.value == "[" {
+            self.tokenizer.index = position_at_start;
+            return Expression::Array(self.parse_array());
+        }
         if next_token.type_ == TokenType::Punctuation && next_token.value == "(" {
             println!(
                 "[parse_expression_piece] Found opening parenthesis, parsing inner expression"
@@ -170,6 +174,11 @@ impl<'a> Parser<'a> {
             }
         }
         expression_list
+    }
+
+    fn parse_array(&mut self) -> Array<'a> {
+        let elements = self.collect_expression_list('[', ']');
+        return Array { elements };
     }
 
     fn collect_custom_list_without_comma<T, F: Fn(&mut Parser<'a>) -> T>(

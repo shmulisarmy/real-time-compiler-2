@@ -12,12 +12,7 @@ pub struct FunctionCall<'a> {
     pub args: Vec<Expression<'a>>,
 }
 
-#[derive(Debug)]
-pub struct Variable<'a> {
-    pub name: String,
-    pub type_: DataType,
-    pub value: Option<Expression<'a>>,
-}
+
 
 #[derive(Debug)]
 pub struct OperatorUse<'a> {
@@ -26,9 +21,21 @@ pub struct OperatorUse<'a> {
     pub right: Box<Expression<'a>>,
 }
 
+#[derive(Debug)]
+pub struct Array<'a> {
+    pub elements: Vec<Expression<'a>>,
+}
 
 
 
+
+
+#[derive(Debug)]
+pub struct Variable<'a> {
+    pub name: String,
+    pub type_: DataType,
+    pub value: Option<Expression<'a>>,
+}
 
 #[derive(Debug)]
 pub struct VarReference<'a> {
@@ -42,6 +49,7 @@ pub enum Expression<'a> {
     Token(Token),
     FunctionCall(FunctionCall<'a>),
     VarReference(VarReference<'a>),
+    Array(Array<'a>),
 }
 
 

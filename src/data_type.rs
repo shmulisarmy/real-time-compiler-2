@@ -6,6 +6,7 @@ pub enum DataType {
     String,
     None,
     Bool,
+    Array,
 }
 
 
@@ -14,6 +15,7 @@ pub fn type_from(value: String) -> DataType {
         "int" => DataType::Int,
         "string" => DataType::String,
         "bool" => DataType::Bool,
+        "array" => DataType::Array,
         _ => panic!("Unknown type {}", value),
     }
 }
@@ -25,6 +27,7 @@ impl fmt::Display for DataType {
             DataType::String => write!(f, "string"),
             DataType::Bool => write!(f, "bool"),
             DataType::None => write!(f, "none"),
+            DataType::Array => write!(f, "array"),
         }
     }
 }

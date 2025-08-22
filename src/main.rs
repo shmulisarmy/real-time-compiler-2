@@ -35,7 +35,7 @@ fn main() {
         
         func add(a int, b int): int {
             var result int = 7 + 5
-            var z string
+            var z array = ["hello", "world"]
             var d int = a + b
             return result
         }

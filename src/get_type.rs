@@ -1,6 +1,6 @@
 use std::option;
 
-use compiler_11::{ast::{Expression, FunctionCall, OperatorUse}, data_type::DataType, lexer::token::TokenType};
+use compiler_11::{ast::{Expression, FunctionCall, OperatorUse}, data_type::{self, DataType}, lexer::token::TokenType};
 
 use crate::{file::File, in_function_scope_validation::find_var_type_from_local_scope, scope_placement_info::ScopePlacementInfo};
 
@@ -66,6 +66,7 @@ impl<'compilation_unit> HasType<'compilation_unit> for Expression<'compilation_u
                     .unwrap_or_else(|| panic!("Variable {} not found", reference.name));
                 variable.type_.clone()
             },
+            Expression::Array(array) => DataType::Array,
             // _ => panic!("Unknown expression type: {}", self),
         }
     }

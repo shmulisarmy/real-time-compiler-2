@@ -57,6 +57,7 @@ impl<'a> fmt::Display for Expression<'a> {
             },
             Expression::FunctionCall(func) => write!(f, "{}", func),
             Expression::VarReference(var_ref) => write!(f, "{}", format_identifier(&var_ref.name)),
+            Expression::Array(_) => write!(f, "{}", "array"),
         }
     }
 }
