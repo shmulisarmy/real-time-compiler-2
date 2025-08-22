@@ -33,7 +33,7 @@ fn main() {
         var num int = 3 - n
         var res int = add(1, n)
 
-        struct Person {
+        Person{
             name string
             age int
         }
@@ -45,6 +45,7 @@ fn main() {
             var person object = {name: "John", age: 30}
             return result
         }
+        Car{ }
     "#;
 
 

@@ -28,8 +28,9 @@ impl<'a> File<'a> {
         let mut variables = HashMap::new();
         let mut structs = HashMap::new();
         parser.tokenizer.eat_lines();
-        let token_start_pos = parser.tokenizer.index;
-        while let Some(token) = parser.tokenizer.next() {
+        while  parser.tokenizer.peek().is_some(){
+            let token_start_pos = parser.tokenizer.index;
+            let token= parser.tokenizer.next().unwrap();
             match token.type_ {
                 TokenType::Keyword => {
                     match token.value.as_str() {
@@ -46,6 +47,19 @@ impl<'a> File<'a> {
                             structs.insert(struct_.name.clone(), struct_);
                         }
                         _ => parser.tokenizer.show_user_error(token_start_pos, token_start_pos+token.value.len(), "not implemented".to_string())
+                    }
+                }
+                TokenType::Identifier => {
+                    if parser.tokenizer.optionally_expect_punctuation('(') {
+                        parser.tokenizer.index = token_start_pos;
+                        let function = parser.parse_function();
+                        functions.insert(function.name.clone(), function);
+                    } else if parser.tokenizer.optionally_expect_punctuation('{') {
+                        parser.tokenizer.index = token_start_pos;
+                        let struct_ = parser.parse_struct();
+                        structs.insert(struct_.name.clone(), struct_);
+                    } else {
+                        parser.tokenizer.show_user_error(token_start_pos, token_start_pos+token.value.len(), "not implemented".to_string())
                     }
                 }
                 _ => parser.tokenizer.show_user_error(token_start_pos, token_start_pos+token.value.len(), "not implemented".to_string())
