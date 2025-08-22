@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use compiler_11::{
     lexer::token::TokenType,
     parser::Parser,
-    ast::{FunctionDef, Variable, Expression},
+    ast::{FunctionDef, Variable, Expression, StructDef},
     data_type::DataType,
     
 };
@@ -16,6 +16,7 @@ pub struct File<'a> {
     source: &'a str,
     pub functions: HashMap<String, FunctionDef<'a>>,
     pub variables: HashMap<String, Variable<'a>>,
+    pub structs: HashMap<String, StructDef<'a>>,
 }
 
 
@@ -25,6 +26,7 @@ impl<'a> File<'a> {
         let mut parser = Parser::new(source);
         let mut functions = HashMap::new();
         let mut variables = HashMap::new();
+        let mut structs = HashMap::new();
         parser.tokenizer.eat_lines();
         let token_start_pos = parser.tokenizer.index;
         while let Some(token) = parser.tokenizer.next() {
@@ -39,6 +41,10 @@ impl<'a> File<'a> {
                             let variable = parser.parse_var();
                             variables.insert(variable.name.clone(), variable);
                         }
+                        "struct" => {
+                            let struct_ = parser.parse_struct();
+                            structs.insert(struct_.name.clone(), struct_);
+                        }
                         _ => parser.tokenizer.show_user_error(token_start_pos, token_start_pos+token.value.len(), "not implemented".to_string())
                     }
                 }
@@ -51,6 +57,7 @@ impl<'a> File<'a> {
             source,
             functions,
             variables,
+            structs,
         }   
     }
 

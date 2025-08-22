@@ -32,6 +32,11 @@ fn main() {
         var n int = 1
         var num int = 3 - n
         var res int = add(1, n)
+
+        struct Person {
+            name string
+            age int
+        }
         
         func add(a int, b int): int {
             var result int = 7 + 5
@@ -45,19 +50,24 @@ fn main() {
 
     let file = File::parse(code);   
     // Parse and print the variable declaration
+    println!("Variable declarations:");
     file.variables.values().for_each(|var| {
-        println!("Variable declaration:");
-        println!("  {}", var);
+        println!("{}", var);
         println!();
     });
 
     // Parse and print the function definition
+    println!("Function definitions:");
     file.functions.values().for_each(|func| {
-        println!("Function definition:");
-        println!("  {}", func);
+        println!("{}", func);
         println!();
     });
 
+    file.structs.values().for_each(|struct_| {
+        println!("Struct definition:");
+        println!("{}", struct_);
+        println!();
+    });
     file.validate_global_variable_types();
     file.validate_functions();
 }

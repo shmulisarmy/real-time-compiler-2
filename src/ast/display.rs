@@ -1,4 +1,4 @@
-use crate::lexer::token::TokenType;
+use crate::{ast::StructDef, lexer::token::TokenType};
 use colored::*;
 use std::fmt;
 
@@ -99,6 +99,21 @@ impl<'a> fmt::Display for FunctionDef<'a> {
         }
 
         // Closing brace
+        write!(f, "}}")
+    }
+}
+
+
+
+
+impl<'a> fmt::Display for StructDef<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {{\n", format_keyword("struct"), format_identifier(&self.name))?;
+
+        for field in &self.fields {
+            write!(f, "    {}\n", field)?;
+        }
+
         write!(f, "}}")
     }
 }

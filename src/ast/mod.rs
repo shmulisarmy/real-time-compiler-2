@@ -9,5 +9,6 @@ pub use structure::{
     OperatorUse,
     ValidInFunctionBody,
     Variable,
+    StructDef,
 };
 pub use comparisons::{AstComparable, ComparisonError};
