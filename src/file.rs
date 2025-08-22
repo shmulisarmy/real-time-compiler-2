@@ -59,7 +59,7 @@ impl<'a> File<'a> {
     pub fn validate_global_variable_types(&self) {
         for variable in self.variables.values() {
             match &variable.value {
-                Some(value) => assert_eq!(variable.type_, value.get_type(self), "Variable {} has type {} but value {}", variable.name, variable.type_, value.get_type(self)),
+                Some(value) => assert_eq!(variable.type_, value.get_type(self, &None), "Variable {} has type {} but value {}", variable.name, variable.type_, value.get_type(self, &None)),
                 None => {assert_ne!(variable.type_, DataType::None, "Variable {} has no type or default value to infer type", variable.name)}
             }
         }   

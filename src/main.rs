@@ -3,6 +3,9 @@ use compiler_11::{
     lexer::token::TokenType,
     parser::Parser,
 };
+
+mod in_function_scope_validation;
+mod scope_placement_info;
 mod validate_function_types;
 mod get_type;
 mod file;
@@ -28,11 +31,12 @@ fn main() {
     let code = r#"
         var n int = 1
         var num int = 3 - n
-        var res string = add(1, 2,)
-        var result string = "hello"
+        var res int = add(1, n,)
         
-        func add(a int, b int,): string {
+        func add(a int, b int,): int {
             var result int = 7 + 5
+            var z string
+            var d int = a + b
             return result
         }
     "#;
