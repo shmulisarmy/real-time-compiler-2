@@ -56,7 +56,7 @@ impl<'a> File<'a> {
 
 
 
-    pub fn type_inference(&self) {
+    pub fn validate_global_variable_types(&self) {
         for variable in self.variables.values() {
             match &variable.value {
                 Some(value) => assert_eq!(variable.type_, value.get_type(self), "Variable {} has type {} but value {}", variable.name, variable.type_, value.get_type(self)),

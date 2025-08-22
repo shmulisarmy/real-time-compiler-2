@@ -3,7 +3,7 @@ use compiler_11::{
     lexer::token::TokenType,
     parser::Parser,
 };
-
+mod validate_function_types;
 mod get_type;
 mod file;
 use crate::file::File;
@@ -28,10 +28,11 @@ fn main() {
     let code = r#"
         var n int = 1
         var num int = 3 - n
-        var res int = add(1, 2,)
+        var res string = add(1, 2,)
+        var result string = "hello"
         
-        func add(a int, b int,): int {
-            var result int = 7 + "hello"
+        func add(a int, b int,): string {
+            var result int = 7 + 5
             return result
         }
     "#;
@@ -52,5 +53,6 @@ fn main() {
         println!();
     });
 
-    file.type_inference();
+    file.validate_global_variable_types();
+    file.validate_functions();
 }
