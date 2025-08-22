@@ -1,7 +1,6 @@
 pub mod structure;
 pub mod display;
 pub mod comparisons;
-pub mod get_type;
 
 pub use structure::{
     Expression,

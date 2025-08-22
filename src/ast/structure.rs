@@ -1,3 +1,5 @@
+use std::option;
+
 use crate::{
     data_type::DataType,
     lexer::token::{Token, TokenType},
@@ -31,7 +33,7 @@ pub struct OperatorUse<'a> {
 #[derive(Debug)]
 pub struct VarReference<'a> {
     pub name: String,
-    pub referring_to: &'a Variable<'a>,
+    pub referring_to: Option<&'a Variable<'a>>,
 }
 
 #[derive(Debug)]

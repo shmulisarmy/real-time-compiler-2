@@ -123,6 +123,9 @@ impl<'a> Parser<'a> {
             "[parse_expression_piece] Returning token as expression: {:?}",
             next_token
         );
+        if next_token.type_ == TokenType::Identifier {
+            return Expression::VarReference(crate::ast::structure::VarReference { name: next_token.value.clone(), referring_to: None });
+        }
         Expression::Token(next_token)
     }
 

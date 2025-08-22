@@ -4,7 +4,7 @@ use compiler_11::{
     parser::Parser,
 };
 
-
+mod get_type;
 mod file;
 use crate::file::File;
 
@@ -26,7 +26,9 @@ fn main() {
     init_colors();
     // Example 1: Variable declaration
     let code = r#"
-        var num string = "world" + "hello"
+        var n int = 1
+        var num int = 3 - n
+        var res int = add(1, 2,)
         
         func add(a int, b int,): int {
             var result int = 7 + "hello"
