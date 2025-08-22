@@ -37,6 +37,7 @@ fn main() {
             var result int = 7 + 5
             var z array = ["hello", "world"]
             var d int = a + b
+            var person object = {name: "John", age: 30}
             return result
         }
     "#;

@@ -1,5 +1,5 @@
 use crate::{
-    ast::{structure::{Array, StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
+    ast::{structure::{Array, Object, StructDef, StructScopeItem}, Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable},
     data_type::{type_from, DataType},
     lexer::{
         token::{self, TokenType},
@@ -61,6 +61,18 @@ impl<'a> Parser<'a> {
         };
     }
 
+
+    pub fn parse_object_field(&mut self) -> Variable<'a> {
+        let name = self.tokenizer.expect(TokenType::Identifier);
+        self.tokenizer.expect_punctuation(':');
+        let value = self.parse_expression(0);
+        return Variable {
+                name: name.value,
+                type_: DataType::None,
+                value: Some(value), 
+            };
+    }
+
     fn parse_expression_piece(&mut self) -> Expression<'a> {
         let position_at_start = self.tokenizer.index;
 
@@ -70,29 +82,48 @@ impl<'a> Parser<'a> {
         }
         let next_token = next_token.unwrap();
 
-        if next_token.type_ == TokenType::Punctuation && next_token.value == "[" {
-            self.tokenizer.index = position_at_start;
-            return Expression::Array(self.parse_array());
-        }
-        if next_token.type_ == TokenType::Punctuation && next_token.value == "(" {
-            let expr = self.parse_expression(0);
-            self.tokenizer.expect_punctuation(')');
-            return expr;
-        }
-
-        if next_token.type_ == TokenType::Identifier {
-            if let Some(peek) = self.tokenizer.peek() {
-                if peek.type_ == TokenType::Punctuation && peek.value == "(" {
+        if next_token.type_ == TokenType::Punctuation{
+            match next_token.value.as_str() {
+                 "[" => {
                     self.tokenizer.index = position_at_start;
-                    let func_call = self.parse_function_call();
-                    return Expression::FunctionCall(func_call);
+                    return Expression::Array(self.parse_array());
                 }
+                 "{" => {
+                    self.tokenizer.index = position_at_start;
+                    return Expression::Object(Object { name: ("anonymous".to_string()), 
+                    fields: self.collect_custom_list(|parser| parser.parse_object_field(), '{', '}') });
+                }
+                 "(" => {
+                    let expr = self.parse_expression(0);
+                    self.tokenizer.expect_punctuation(')');
+                    return expr;
+                }
+                "," => {
+                     self.tokenizer.show_user_error(position_at_start, self.tokenizer.index, "did you mean to put another expression piece before the comma?".to_string());
+                }
+                _ => self.tokenizer.show_user_error(position_at_start, self.tokenizer.index, "don't know how to deal with the this punctuation char in this context".to_string()),
             }
         }
 
         if next_token.type_ == TokenType::Identifier {
+            if let Some(peek) = self.tokenizer.peek() && peek.type_ == TokenType::Punctuation{
+                    match peek.value.as_str() {
+                        "(" => {
+                            self.tokenizer.index = position_at_start;
+                            let func_call = self.parse_function_call();
+                            return Expression::FunctionCall(func_call);
+                        }
+                        "{" => {
+                            self.tokenizer.index = position_at_start;
+                            let struct_call = self.parse_object();
+                            return Expression::Object(struct_call);
+                        }
+                        _ => {}
+                    }
+            }
             return Expression::VarReference(crate::ast::structure::VarReference { name: next_token.value.clone(), referring_to: None });
         }
+
         Expression::Token(next_token)
     }
 
@@ -238,6 +269,14 @@ impl<'a> Parser<'a> {
             name: name_token.value,
             fields,
             methods,
+        };
+    }
+    pub fn parse_object(&mut self) -> Object<'a> {
+        let name_token = self.tokenizer.expect(TokenType::Identifier);
+        let fields = self.collect_custom_list(|parser| parser.parse_object_field(), '{', '}');
+        return Object {
+            name: name_token.value,
+            fields,
         };
     }
     pub fn parse_expression(&mut self, left_pull: u32) -> Expression<'a> {

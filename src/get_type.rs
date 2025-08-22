@@ -67,6 +67,7 @@ impl<'compilation_unit> HasType<'compilation_unit> for Expression<'compilation_u
                 variable.type_.clone()
             },
             Expression::Array(array) => DataType::Array,
+            Expression::Object(object) => DataType::Object,
             // _ => panic!("Unknown expression type: {}", self),
         }
     }

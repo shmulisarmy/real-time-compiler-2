@@ -50,6 +50,7 @@ pub enum Expression<'a> {
     FunctionCall(FunctionCall<'a>),
     VarReference(VarReference<'a>),
     Array(Array<'a>),
+    Object(Object<'a>),
 }
 
 
@@ -76,6 +77,12 @@ pub struct StructDef<'a> {
     pub name: String,
     pub fields: Vec<Variable<'a>>,
     pub methods: Vec<FunctionDef<'a>>,
+}
+
+#[derive(Debug)]
+pub struct Object<'a> {
+    pub name: String,
+    pub fields: Vec<Variable<'a>>,
 }
 
 
