@@ -29,19 +29,23 @@ fn main() {
     init_colors();
     // Example 1: Variable declaration
     let code = r#"
-        var n int = 1
+
+        is_greater_than(a int, b int):int{}
+
+        var n int = 1 is_greater_than 9
         var num int = 3 - n
         var res int = add(1, n)
+        var s string = "hello"
 
         Person{
             name string
             age int
         }
         
-        func add(a int, b int): int {
+        func add(a int, b int = 9): int {
             var result int = 7 + 5
             var z array = ["hello", "world"]
-            var d int = a + b
+            var d int = (a + b) + 1 * 7
             var person object = {name: "John", age: 30}
             return result
         }

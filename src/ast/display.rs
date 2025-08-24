@@ -4,12 +4,12 @@ use std::fmt;
 
 use super::structure::{Expression, FunctionCall, FunctionDef, OperatorUse, ValidInFunctionBody, Variable};
 
-fn format_type(s: &str) -> String { s.blue().to_string() }
-fn format_keyword(s: &str) -> String { s.blue().bold().to_string() }
-fn format_identifier(s: &str) -> String { s.yellow().to_string() }
-fn format_number(s: &str) -> String { s.green().to_string() }
-fn format_operator(s: &str) -> String { s.cyan().to_string() }
-fn format_string(s: &str) -> String { s.red().to_string() }
+fn format_type(s: &str) -> String { s.custom_color((80, 205, 150)).to_string() }
+fn format_keyword(s: &str) -> String { s.custom_color((20, 0, 205)).bold().to_string() }
+fn format_identifier(s: &str) -> String { s.custom_color((204, 204, 0)).to_string() }
+fn format_number(s: &str) -> String { s.white().to_string() }
+fn format_operator(s: &str) -> String { s.white().to_string() }
+fn format_string(s: &str) -> String { s.custom_color((255, 195, 50)).to_string() }
 
 fn indent(f: &mut std::fmt::Formatter, depth: usize) -> fmt::Result {
     write!(f, "{:indent$}", "", indent = depth * 2)
@@ -28,13 +28,15 @@ impl<'a> fmt::Display for FunctionCall<'a> {
 
 impl<'a> fmt::Display for Variable<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}: {}",
-            format_identifier(&self.name),
-            format_type(&self.type_.to_string())
-        )?;
-        if let Some(expr) = &self.value { write!(f, " {} {}", "=".white(), expr)?; }
+        if let Some(expr) = &self.value {
+            write!(f, "{} {} {} = {}",
+                format_keyword("var"),
+                format_identifier(&self.name),
+                format_type(&self.type_.to_string()),
+                expr)?;
+        } else {
+            write!(f, "{} {} {}", format_keyword("var"), format_identifier(&self.name), format_type(&self.type_.to_string()))?;
+        }
         Ok(())
     }
 }
@@ -80,7 +82,7 @@ impl<'a> fmt::Display for FunctionDef<'a> {
         write!(
             f,
             "{} {} (",
-            format_keyword("fn"),
+            format_keyword("func"),
             format_identifier(&self.name)
         )?;
 

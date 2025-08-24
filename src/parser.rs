@@ -45,6 +45,14 @@ impl<'a> Parser<'a> {
 
     pub fn parse_var(&mut self) -> Variable<'a> {
         let name = self.tokenizer.expect(TokenType::Identifier);
+        if self.tokenizer.optionally_expect_string("=") {
+            let value = self.parse_expression(0);
+            return Variable {
+                name: name.value,
+                type_: DataType::None,
+                value: Some(value),
+            };
+        }
         let type_ = self.parse_type();
         if self.tokenizer.optionally_expect_string("=") {
             let value = self.parse_expression(0);
@@ -259,10 +267,10 @@ impl<'a> Parser<'a> {
 
 
     fn parse_field_or_method(&mut self) -> StructScopeItem<'a> {
-        let start_pos = self.tokenizer.index;
         if self.tokenizer.optionally_expect_keyword_of("func") {
             return StructScopeItem::Method(self.parse_function());
         }
+        let start_pos = self.tokenizer.index;
         if self.tokenizer.optionally_expect_type(TokenType::Identifier) && self.tokenizer.optionally_expect_punctuation('(') {
             self.tokenizer.index = start_pos;
             return StructScopeItem::Method(self.parse_function());
@@ -297,9 +305,7 @@ impl<'a> Parser<'a> {
         };
     }
     pub fn parse_expression(&mut self, left_pull: u32) -> Expression<'a> {
-        println!("[parse_expression] Starting with left_pull: {}", left_pull);
-        let mut left: Expression = self.parse_expression_piece();
-        println!("[parse_expression] Initial left: {:?}", left);
+        let mut left: Expression = self.parse_expression_piece();    
 
         while self.tokenizer.in_range() {
             let possibly_greater_precedence_operand = self.tokenizer.peek();
@@ -307,43 +313,35 @@ impl<'a> Parser<'a> {
                 break;
             }
             let possibly_greater_precedence_operand = possibly_greater_precedence_operand.unwrap();
-            if possibly_greater_precedence_operand.type_ != TokenType::Operator {
+            if possibly_greater_precedence_operand.type_ != TokenType::Operator && possibly_greater_precedence_operand.type_ != TokenType::Identifier {
                 break;
             }
             if let Some(&precedence) =
                 OPERATOR_PRECEDENCE.get(possibly_greater_precedence_operand.value.as_str())
             {
                 if precedence > left_pull {
-                    println!(
-                        "[parse_expression] Found operator '{}' with precedence {} (needs > {})",
-                        possibly_greater_precedence_operand.value, precedence, left_pull
-                    );
                     self.tokenizer.next(); // Consume the operator
 
-                    println!(
-                        "[parse_expression] Parsing right hand side with precedence {}",
-                        precedence
-                    );
                     let right = self.parse_expression(precedence);
 
-                    println!(
-                        "[parse_expression] Creating OperatorUse: {} between {:?} and {:?}",
-                        possibly_greater_precedence_operand.value, left, right
-                    );
                     left = Expression::OperatorUse(OperatorUse {
                         operator: possibly_greater_precedence_operand.value.clone(),
                         left: Box::new(left),
                         right: Box::new(right),
                     });
-                    println!("[parse_expression] New left: {:?}", left);
                     continue;
                 } else {
                     break;
                 }
+            } else if possibly_greater_precedence_operand.type_ == TokenType::Identifier {
+                self.tokenizer.next();
+                left = Expression::FunctionCall(FunctionCall {
+                    name: possibly_greater_precedence_operand.value.clone(),
+                    args: vec![left, self.parse_expression(0)],
+                });
             }
         }
 
-        println!("[parse_expression] Final expression: {:?}", left);
         return left;
     }
     fn parse_type(&mut self) -> DataType {

@@ -30,7 +30,7 @@ impl<'compilation_unit>HasType<'compilation_unit> for OperatorUse<'compilation_u
 
 impl<'compilation_unit> HasType<'compilation_unit> for FunctionCall<'compilation_unit> {
     fn get_type(&self, file: &File<'compilation_unit>, scope_placement_info: &'compilation_unit Option<ScopePlacementInfo<'compilation_unit>>) -> DataType {
-        let function = file.functions.get(&self.name).unwrap();
+        let function = file.functions.get(&self.name).expect(format!("Function {} not found", self.name).as_str());
         if self.args.len() != function.args.len() {
             panic!("Argument count mismatch: {} and {} when trying to call function {}", self.args.len(), function.args.len(), self.name);
         }

@@ -235,7 +235,7 @@ impl<'a> Tokenizer<'a> {
             self.show_user_error(
                 start_pos,
                 self.index,
-                format!("Expected {:?} got {:?}", type_, token.type_),
+                format!("Expected {:?} got {:?}", type_, token.value),
             );
         }
         token
