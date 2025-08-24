@@ -53,7 +53,9 @@ impl<'compilation_unit> HasType<'compilation_unit> for Expression<'compilation_u
                 TokenType::String => DataType::String,
                 _ => panic!("Unknown token type: {}", token.type_)
             },
-            Expression::FunctionCall(call) => call.get_type(file, scope_placement_info),
+            Expression::FunctionCall(call) => {
+                call.get_type(file, scope_placement_info)
+            },
             Expression::VarReference(reference) => {
                 if scope_placement_info.is_some() {
                     let scope_placement_info = scope_placement_info.as_ref().unwrap();
